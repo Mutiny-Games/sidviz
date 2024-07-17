@@ -36,7 +36,18 @@ if (window.location.hash != "")
 else
 	var url = sids[0];
 
-loadSong( url );
+var started = false;
+document.body.addEventListener("click",function(){
+	if(started)
+		return;
+	var script = document.createElement("script");
+	script.src = "js/libs/pico.dev.js";
+	document.head.appendChild(script);
+	script.onload = function(){
+		loadSong( url );
+		started = true;
+	}
+});
 
 //render
 function loop()
