@@ -7,30 +7,75 @@ var player = null;
 var settings = { 
 	quality: jsSID.quality.best, //low,medium,best
 	method: jsSID.ReSID.sampling_method.SAMPLE_FAST, //SAMPLE_FAST, SAMPLE_RESAMPLE_FAST, SAMPLE_INTERPOLATE, SAMPLE_RESAMPLE_INTERPOLATE
-	clock: jsSID.chip.model.MOS6581, //MOS8580
-	model: jsSID.chip.clock.PAL //NTSC
+	model: localStorage.getItem("model") || jsSID.chip.model.MOS8580,
+	clock: jsSID.chip.clock.PAL //NTSC
 };
 
 var sidrender = new SIDRender( canvas );
 sidrender.onEvent = function(action,param, e)
 {
 	if(action == "playsong")
+		sidrender.check_hq = true; // JCH: Check persistent HQ mode
 		loadSong(param);
 }
 
+// var sids = [
+// 	"data/DRAX/Black_Magic.sid",
+// 	"data/DRAX/Camerock.sid",
+// 	"data/DRAX/Capripholian_Waltz.sid",
+// 	"data/DRAX/Crispy_Crushing_Crackers.sid",
+// 	"data/DRAX/Deathblow.sid",
+// 	"data/DRAX/Dirt.sid",
+// 	"data/DRAX/KickAssembler_Easteregg.sid",
+// 	"data/DRAX/Lady_Arabica.sid",
+// 	"data/DRAX/Natural_Cause_of_Death.sid",
+// 	"data/DRAX/Overlame.sid",
+// 	"data/DRAX/Six-Pac_Man.sid",
+// 	"data/DRAX/Star_Flake.sid",
+// 	"data/DRAX/Tristesse.sid",
+// 	"data/",
+// 	"data/Jammer/5_A_Dub.sid",
+// 	"data/Jammer/Amen_Bigbeat_Brother.sid",
+// 	"data/Jammer/Caren_and_the_TT.sid",
+// 	"data/Jammer/Euro_Spy.sid",
+// 	"data/",
+// 	"data/JCH/Aouw.sid",
+// 	"data/JCH/Batman.sid",
+// 	"data/JCH/Chordian.sid",
+// 	"data/JCH/Electric_Toothbrush.sid",
+// 	"data/JCH/George_Carl.sid",
+// 	"data/JCH/Michelle.sid",
+// 	"data/",
+// 	"data/Jozz/Deel_1.sid",
+// 	"data/Jozz/DMC_Demo_IV_1.sid",
+// 	"data/Jozz/Fruitbank.sid",
+// 	"data/Jozz/Namnam_Special.sid",
+// 	"data/Jozz/Shape.sid",
+// 	"data/",
+// 	"data/JT/Hawkeye.sid",
+// 	"data/JT/RoboCop_3.sid",
+// 	"data/",
+// 	"data/Laxity/Crosswords.sid",
+// 	"data/Laxity/DNA_Warrior.sid",
+// 	"data/Laxity/Mikuk.sid",
+// 	"data/Laxity/Squamp.sid",
+// 	"data/Laxity/Stormlord_II.sid",
+// 	"data/",
+// 	"data/Linus/64_Forever.sid",
+// 	"data/Linus/Datalife_Verbatim.sid",
+// 	"data/Linus/Enter_the_Ninja.sid",
+// 	"data/Linus/Forbidden_Aztec.sid",
+// 	"data/",
+// 	"data/LMan/808_Love.sid",
+// 	"data/LMan/Boombox_Alley.sid",
+// ];
+
 var sids = [
-	"data/terracresta.sid",
-	"data/Mr_Marvellous.dmp",
-	"data/Parallax (subtune 1).sid",
-	"http://remix.kwed.org/sid.php/4886/Ocean_Loader_1%20(subtune%201).sid",
-	"http://remix.kwed.org/sid.php/5497/Monty_on_the_Run%20(subtune%201).sid",
-	"http://remix.kwed.org/sid.php/5285/DeathWish_III%20(subtune%201).sid",
-	"http://remix.kwed.org/sid.php/812/Parallax%20(subtune%204).sid",
-	"http://remix.kwed.org/sid.php/5578/Panther%20(subtune%201).sid",
-	"http://remix.kwed.org/sid.php/5582/Spy_vs_Spy%20(subtune%201).sid"
+	"https://hvsc.csdb.dk/MUSICIANS/H/Hubbard_Rob/Bangkok_Knights.sid"
 ];
 sidrender.setPlaylist(sids);
 
+// JCH: Run tune URL from hash parameter if specified
 if (window.location.hash != "")
 	var url = window.location.hash.substr(1);
 else
@@ -64,12 +109,14 @@ loop();
 function loadSong( url, filename )
 {
 	if(url.substr(0,5) == "http:" || url.substr(0,6) == "https:")
-		url = "http://" + location.host + "/proxy.php?url=" + url;
+		url = "http://chordian.net/sidviz/proxy.php?url=" + url;
 
 	if(!filename)
 		filename = url;
 
 	var ext = getExtension( filename );
+
+	sidrender.url = url; // JCH: Added to support proper stopping of a SID tune
 
 	if( ext == "sid" )
 	{
@@ -88,10 +135,16 @@ function loadSong( url, filename )
 		});
 	}
 	else
-		console.error("unknown format, only sid and dmp supported");
+		console.error("Unknown format, only SID and DMP are supported.");
+
 	if(player && settings.method)
 		player.synth.sampling = settings.method;
 
+	if(player)
+	{
+		this.player.model = this.player.synth.model = localStorage.getItem("model") || jsSID.chip.model.MOS8580;
+		this.player.synth.set_chip_model(this.player.model);
+	}
 }
 
 // DRAG FILES
