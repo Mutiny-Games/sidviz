@@ -31,7 +31,10 @@ var sids = [
 ];
 sidrender.setPlaylist(sids);
 
-var url = sids[0];
+if (window.location.hash != "")
+	var url = window.location.hash.substr(1);
+else
+	var url = sids[0];
 
 loadSong( url );
 
